@@ -42,3 +42,4 @@ body.off .opts, body.off .stats { opacity: .4; pointer-events: none; }
 .manage span { font-weight: 600; }
 .manage span::after { content: " →"; color: #dc2626; }
 .manage small { color: #666; }
+.row.moot { opacity: .45; }

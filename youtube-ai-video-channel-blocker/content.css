@@ -137,3 +137,40 @@ html[dark] #avf-mini-menu .avf-menu-item { color: #f1f1f1; }
 }
 #avf-guard button.avf-link:hover { text-decoration: underline; filter: none; }
 #avf-guard .avf-note-editor textarea { min-height: 70px; }
+
+/* ---------------- Block YouTube Shorts (html[data-avf-noshorts]) ---------------- */
+/* Shorts shelves on home, subscriptions, search, sidebar and channel pages */
+html[data-avf-noshorts] ytd-rich-shelf-renderer[is-shorts],
+html[data-avf-noshorts] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-avf-noshorts] ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2),
+html[data-avf-noshorts] ytd-reel-shelf-renderer,
+html[data-avf-noshorts] grid-shelf-view-model:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2),
+html[data-avf-noshorts] ytd-item-section-renderer:has(> #contents > ytd-reel-shelf-renderer:only-child),
+/* single Shorts mixed into grids, search results, sidebar, playlists */
+html[data-avf-noshorts] ytd-reel-item-renderer,
+html[data-avf-noshorts] ytm-shorts-lockup-view-model,
+html[data-avf-noshorts] ytm-shorts-lockup-view-model-v2,
+html[data-avf-noshorts] ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytd-video-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] yt-lockup-view-model:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytd-playlist-video-renderer:has(a[href^="/shorts/"]),
+/* "Shorts" in the left menu, the mini menu, and the channel-page tab */
+html[data-avf-noshorts] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-avf-noshorts] ytd-guide-entry-renderer:has(a[title="Shorts"]),
+html[data-avf-noshorts] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-avf-noshorts] ytd-mini-guide-entry-renderer[aria-label="Shorts"],
+html[data-avf-noshorts] yt-tab-shape[tab-title="Shorts"],
+html[data-avf-noshorts] tp-yt-paper-tab:has(> .tab-content[title="Shorts"]),
+/* m.youtube.com */
+html[data-avf-noshorts] ytm-reel-shelf-renderer,
+html[data-avf-noshorts] ytm-rich-section-renderer:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2, ytm-reel-shelf-renderer),
+html[data-avf-noshorts] ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytm-rich-item-renderer:has(a[href^="/shorts/"]),
+html[data-avf-noshorts] ytm-pivot-bar-item-renderer:has(.pivot-shorts) {
+  display: none !important;
+}
+#avf-guard[data-reason="shorts"] .avf-card { max-width: 520px; }
+#avf-guard .avf-actions { flex-wrap: wrap; }
+#avf-guard .avf-actions button { white-space: nowrap; }

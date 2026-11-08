@@ -1,12 +1,14 @@
 (() => {
   'use strict';
-  const DEFAULTS = { enabled: true, mode: 'hide', skipShorts: true, guardWatch: true, hoverButton: true, showBadge: true };
+  const DEFAULTS = { enabled: true, mode: 'hide', blockShorts: true, skipShorts: true, guardWatch: true, hoverButton: true, showBadge: true };
   let settings = { ...DEFAULTS };
   const $ = (id) => document.getElementById(id);
 
   const render = () => {
     $('enabled').checked = settings.enabled;
+    $('blockShorts').checked = settings.blockShorts;
     $('skipShorts').checked = settings.skipShorts;
+    $('row-skipShorts').classList.toggle('moot', settings.blockShorts); // all Shorts are blocked anyway
     $('guardWatch').checked = settings.guardWatch;
     $('hoverButton').checked = settings.hoverButton;
     $('showBadge').checked = settings.showBadge;
@@ -35,7 +37,7 @@
     render();
     loadStats();
 
-    for (const key of ['enabled', 'skipShorts', 'guardWatch', 'hoverButton', 'showBadge']) {
+    for (const key of ['enabled', 'blockShorts', 'skipShorts', 'guardWatch', 'hoverButton', 'showBadge']) {
       $(key).addEventListener('change', () => { settings[key] = $(key).checked; render(); save(); });
     }
     $('mode-hide').onclick = () => { settings.mode = 'hide'; render(); save(); };

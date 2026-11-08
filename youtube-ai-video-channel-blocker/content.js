@@ -40,7 +40,7 @@
   const CLEAN_TTL_DAYS = 14;    // labels can be added later (auto-detection), so re-check
   const FLAGGED_TTL_DAYS = 180;
   const CACHE_MAX = 15000;
-  const DEFAULTS = { enabled: true, mode: 'hide', skipShorts: true, guardWatch: true, hoverButton: true, showBadge: true };
+  const DEFAULTS = { enabled: true, mode: 'hide', blockShorts: true, skipShorts: true, guardWatch: true, hoverButton: true, showBadge: true };
 
   const AI_LABEL_RE =
     /(^|[\s(])(AI|IA|KI|ИИ)([\s):]|$)|made with ai|ai[- ]generated|synthetic|altered|generat|künstlich|sintétic|sintetic|yapay|生成|생성|人工知能/i;
@@ -77,6 +77,7 @@
   let lastSkip = { id: null, t: 0 };
   let lastHref = location.href;
   const allowedOnce = new Set();
+  let shortsOk = false;             // "Watch Shorts anyway": until you leave the Shorts player
 
   const today = () => Math.floor(Date.now() / 86400000);
   const safeDecode = (s) => { try { return decodeURIComponent(s); } catch (e) { return s; } };
@@ -89,7 +90,9 @@
     if (!de) return;
     de.toggleAttribute('data-avf-on', !!settings.enabled);
     de.setAttribute('data-avf-mode', settings.mode === 'dim' ? 'dim' : 'hide');
+    de.toggleAttribute('data-avf-noshorts', !!(settings.enabled && settings.blockShorts));
   };
+  const blockingShorts = () => !!(settings.enabled && settings.blockShorts);
 
   // ---------------------------------------------------------------- storage
   const setBlocks = (v, c) => {
@@ -484,7 +487,7 @@
     if (!elsById.has(id)) elsById.set(id, new Set());
     elsById.get(id).add(el);
     const info = cachedInfo(id);
-    if (!info) enqueue(id);
+    if (!info && !(blockingShorts() && el.querySelector('a[href^="/shorts/"]'))) enqueue(id);
     const ch = channelFor(el, info);
     const blocked = isBlocked(id, ch);
     const ai = !blocked && info?.a === 1 && !isAllowed(id, ch);
@@ -560,6 +563,20 @@
 
   const removeGuard = () => document.getElementById('avf-guard')?.remove();
 
+  // Shorts use their own player, so for Shorts pause every <video> on the page.
+  const pauseVideos = (all = false, resume = false) => {
+    const vids = all ? document.querySelectorAll('video') : [document.querySelector('#movie_player video')];
+    for (const v of vids) {
+      if (!v) continue;
+      if (resume) { if (v.closest('ytd-reel-video-renderer[is-active], #shorts-player')) v.play().catch(() => {}); }
+      else v.pause();
+    }
+  };
+  // Shorts autoplay as you scroll; keep them paused while the Shorts screen is up.
+  document.addEventListener('play', (e) => {
+    if (document.getElementById('avf-guard')?.dataset.reason === 'shorts' && e.target instanceof HTMLVideoElement) e.target.pause();
+  }, true);
+
   // Which blocked record caused the guard (to show / edit its reason)
   const guardTarget = (id, reason) => {
     if (reason === 'video') return blockedVideos[id] ? { kind: 'video', key: id } : null;
@@ -604,29 +621,35 @@
     const existing = document.getElementById('avf-guard');
     if (existing?.dataset.vid === id && existing.dataset.reason === reason) { renderGuardNote(existing); return; }
     existing?.remove();
-    document.querySelector('#movie_player video')?.pause();
+    pauseVideos(reason === 'shorts');
     const g = document.createElement('div');
     g.id = 'avf-guard';
     g.dataset.vid = id;
     g.dataset.reason = reason;
-    const blocked = reason !== 'ai';
+    const blocked = reason === 'video' || reason === 'channel';
+    const shorts = reason === 'shorts';
     g.innerHTML = `
       <div class="avf-card">
-        <div class="avf-badge ${blocked ? 'avf-badge-block' : ''}">${blocked ? 'BLOCKED' : 'AI'}</div>
+        <div class="avf-badge ${blocked || shorts ? 'avf-badge-block' : ''}">${shorts ? 'SHORTS' : blocked ? 'BLOCKED' : 'AI'}</div>
         <h2></h2>
         <p></p>
         ${blocked ? '<div class="avf-guard-note"></div>' : ''}
         <div class="avf-actions">
           <button data-act="back">Go back</button>
-          <button data-act="watch" class="avf-secondary">Watch anyway</button>
+          ${shorts ? `<button data-act="regular" class="avf-secondary" title="Play this one video in the normal player">Open as regular video</button>
+          <button data-act="shortsok" class="avf-secondary" title="Allow Shorts until you leave the Shorts player">Watch Shorts anyway</button>`
+    : `<button data-act="watch" class="avf-secondary">Watch anyway</button>
           ${blocked ? '<button data-act="unblock" class="avf-secondary">Unblock</button>'
-    : '<button data-act="allow" class="avf-secondary" title="Never hide this channel\'s AI-labeled videos">Always allow this channel</button>'}
+    : '<button data-act="allow" class="avf-secondary" title="Never hide this channel\'s AI-labeled videos">Always allow this channel</button>'}`}
         </div>
       </div>`;
     g.querySelector('h2').textContent =
-      reason === 'ai' ? 'YouTube labels this video as AI-generated or altered'
-        : reason === 'channel' ? 'You blocked this channel' : 'You blocked this video';
-    g.querySelector('p').textContent = "John's YouTube AI Video Channel Blocker paused it for you.";
+      shorts ? 'YouTube Shorts are blocked'
+        : reason === 'ai' ? 'YouTube labels this video as AI-generated or altered'
+          : reason === 'channel' ? 'You blocked this channel' : 'You blocked this video';
+    g.querySelector('p').textContent = shorts
+      ? 'You can turn this off in the extension menu (“Block YouTube Shorts”).'
+      : "John's YouTube AI Video Channel Blocker paused it for you.";
     document.documentElement.appendChild(g);
     renderGuardNote(g);
     g.addEventListener('click', async (e) => {
@@ -635,6 +658,13 @@
       if (act === 'back') {
         removeGuard();
         if (history.length > 1) history.back(); else location.href = '/';
+      } else if (act === 'regular') {
+        location.href = `/watch?v=${id}`;
+      } else if (act === 'shortsok') {
+        shortsOk = true;
+        removeGuard();
+        handleCurrentVideo();               // still apply AI / manual blocks
+        if (!document.getElementById('avf-guard')) pauseVideos(true, true);
       } else {
         if (act === 'unblock') await unblockFor(id, watchEl(), cache[id]);
         if (act === 'allow') await allowChannel(id, watchEl());
@@ -647,7 +677,9 @@
 
   const handleCurrentVideo = () => {
     const id = currentWatchId();
-    if (!id || !settings.enabled || allowedOnce.has(id)) return;
+    if (!id || !settings.enabled) return;
+    if (isShortsPage() && blockingShorts() && !shortsOk) { showGuard(id, 'shorts'); return; }
+    if (allowedOnce.has(id)) return;
     const info = cache[id];
     const ch = channelFor(watchEl(), info);
     let reason = null;
@@ -687,9 +719,10 @@
       scheduleSave();
     }
     trackSearch();
+    if (!isShortsPage()) shortsOk = false;
     const id = currentWatchId();
     if (id && settings.enabled) {
-      if (cachedInfo(id)) handleCurrentVideo();
+      if (cachedInfo(id) || (isShortsPage() && blockingShorts())) handleCurrentVideo();
       else enqueue(id, true);
     }
     scheduleScan();
@@ -1054,6 +1087,7 @@
       if (!settings.enabled) { removeGuard(); closeMiniMenu(); document.querySelector('.avf-watch-btns')?.remove(); }
       if (!settings.hoverButton) document.getElementById('avf-hover-btn')?.remove();
       if (settings.enabled && !was) { pump(); scheduleScan(); }
+      if (settings.enabled) handleCurrentVideo(); // e.g. Shorts blocking switched on/off
     }
     if (changes.allowedVideos || changes.allowedChannels) {
       setAllowed(

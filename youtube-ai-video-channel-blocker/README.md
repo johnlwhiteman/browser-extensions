@@ -17,3 +17,11 @@ You can write down why you blocked a video or channel, and change it later:
 - On the **Blocked list** page, every row has **Add reason** / **Edit reason**. You can also type a reason when blocking by link, and the search box searches reasons too.
 
 Reasons are included in backups. Clear the text and save to remove a reason.
+
+
+## Block YouTube Shorts
+
+On by default. Turn it off in the extension menu ("Block YouTube Shorts"). While it's on:
+
+- Shorts shelves and single Shorts are hidden on home, subscriptions, search, the sidebar, channel pages and playlists, along with the Shorts entry in the left menu and the channel Shorts tab.
+- Opening a Shorts link shows a stop screen instead of playing it. From there you can go back, open that one video in the normal player, or watch Shorts anyway until you leave the Shorts player.
