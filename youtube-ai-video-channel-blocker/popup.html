@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon-32.png" alt="" width="24" height="24">
+    <h1>John&#39;s YouTube AI Video Channel Blocker</h1>
+    <label class="switch" title="Turn filtering on or off">
+      <input type="checkbox" id="enabled"><span></span>
+    </label>
+  </header>
+
+  <section class="opts">
+    <div class="row">
+      <span>AI-labeled videos in lists</span>
+      <div class="seg">
+        <button id="mode-hide">Hide</button>
+        <button id="mode-dim">Dim</button>
+      </div>
+    </div>
+    <label class="row">
+      <span>Auto-skip AI Shorts</span>
+      <input type="checkbox" id="skipShorts">
+    </label>
+    <label class="row">
+      <span>Warn before playing an AI video</span>
+      <input type="checkbox" id="guardWatch">
+    </label>
+    <label class="row">
+      <span>Block button on thumbnails</span>
+      <input type="checkbox" id="hoverButton">
+    </label>
+    <label class="row">
+      <span>Show count on the toolbar icon</span>
+      <input type="checkbox" id="showBadge">
+    </label>
+  </section>
+
+  <section class="stats">
+    <div><b id="stat-here">–</b><small>hidden on this page</small></div>
+    <div><b id="stat-total">–</b><small>hidden in total</small></div>
+    <div><b id="stat-checked">–</b><small>videos checked</small></div>
+  </section>
+
+  <button id="stats" class="manage">
+    <span>AI videos caught</span>
+    <small>URLs, charts and statistics</small>
+  </button>
+  <button id="manage" class="manage">
+    <span>Blocked list</span>
+    <small><b id="n-channels">0</b> channels · <b id="n-videos">0</b> videos</small>
+  </button>
+
+  <p class="note">Tip: block any video or channel from its ⋮ menu on YouTube.<br>The AI filter only catches videos YouTube itself labels as AI. Unlabeled AI videos can still get through.</p>
+  <button id="clear" class="link">Re-check all videos (clear saved results)</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

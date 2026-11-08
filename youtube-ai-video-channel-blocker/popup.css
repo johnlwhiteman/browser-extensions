@@ -1,0 +1,44 @@
+body {
+  width: 300px; margin: 0; padding: 14px 16px;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #0f0f0f; background: #fff;
+}
+header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+h1 { flex: 1; margin: 0; font-size: 14px; line-height: 1.25; font-weight: 600; }
+
+.opts { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px 0; }
+.row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; cursor: default; }
+label.row { cursor: pointer; }
+.row input[type=checkbox] { width: 16px; height: 16px; accent-color: #dc2626; }
+
+.seg { display: flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: #fff; padding: 4px 10px; cursor: pointer; font: inherit; }
+.seg button + button { border-left: 1px solid #ccc; }
+.seg button.active { background: #0f0f0f; color: #fff; }
+
+.stats { display: flex; justify-content: space-between; text-align: center; padding: 12px 0 6px; }
+.stats div { flex: 1; }
+.stats b { display: block; font-size: 18px; }
+.stats small { color: #666; font-size: 11px; }
+
+.note { color: #666; font-size: 11px; margin: 8px 0; }
+.link { border: 0; background: none; padding: 0; color: #065fd4; cursor: pointer; font: inherit; font-size: 12px; }
+
+.switch { position: relative; width: 36px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch span { position: absolute; inset: 0; border-radius: 20px; background: #ccc; cursor: pointer; transition: .15s; }
+.switch span::before { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .15s; }
+.switch input:checked + span { background: #dc2626; }
+.switch input:checked + span::before { transform: translateX(16px); }
+
+body.off .opts, body.off .stats { opacity: .4; pointer-events: none; }
+
+.manage {
+  display: flex; flex-direction: column; align-items: flex-start; width: 100%;
+  margin-top: 8px; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 10px;
+  background: #fafafa; cursor: pointer; font: inherit; text-align: left;
+}
+.manage:hover { background: #f2f2f2; }
+.manage span { font-weight: 600; }
+.manage span::after { content: " →"; color: #dc2626; }
+.manage small { color: #666; }

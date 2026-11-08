@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI videos caught – John&#39;s YouTube AI Video Channel Blocker</title>
+  <link rel="icon" href="icons/icon-32.png">
+  <link rel="stylesheet" href="manage.css">
+  <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+  <nav class="topnav">
+    <span class="brand"><img src="icons/icon-32.png" alt="" width="20" height="20">John&#39;s YouTube AI Video Channel Blocker</span>
+    <a href="stats.html" class="current">AI videos caught</a>
+    <a href="manage.html">Blocked list</a>
+  </nav>
+
+  <main class="wide">
+    <header>
+      <div>
+        <h1>AI videos caught</h1>
+        <p class="sub">Every video this extension hid because YouTube labels it as AI-generated or altered.</p>
+      </div>
+    </header>
+
+    <section class="tiles" id="tiles"></section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Hidden per day</h2>
+        <div class="seg" id="range">
+          <button data-days="14">14 days</button>
+          <button data-days="30" class="active">30 days</button>
+          <button data-days="90">90 days</button>
+        </div>
+      </div>
+      <div id="daily" class="chart"></div>
+    </section>
+
+    <div class="two">
+      <section class="card">
+        <div class="card-head"><h2>Where they showed up</h2></div>
+        <div id="where"></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Channels posting the most AI videos</h2></div>
+        <ol id="channels" class="ranked"></ol>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><h2>Searches with the most AI results</h2><small id="search-note"></small></div>
+      <table class="tbl" id="searches">
+        <thead><tr><th>Search</th><th class="num">Times searched</th><th class="num">AI videos hidden</th><th class="num">Blocked</th><th>Last searched</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>All AI videos <span id="vid-count" class="pill">0</span></h2>
+        <div class="tools">
+          <input id="q" type="search" placeholder="Search title, channel or URL">
+          <select id="chan-filter"><option value="">All channels</option></select>
+          <select id="sort">
+            <option value="recent">Most recent</option>
+            <option value="seen">Most often hidden</option>
+            <option value="first">First seen</option>
+            <option value="title">Title A–Z</option>
+          </select>
+        </div>
+      </div>
+      <table class="tbl videos">
+        <thead><tr><th></th><th>Video &amp; URL</th><th>Channel</th><th class="num">Hidden</th><th>Where</th><th>First seen</th><th></th></tr></thead>
+        <tbody id="videos"></tbody>
+      </table>
+      <div id="vid-empty" class="empty" hidden></div>
+      <div class="more"><button id="more" hidden>Show more</button></div>
+    </section>
+
+    <footer>
+      <button id="copy-urls">Copy all URLs</button>
+      <button id="csv">Download CSV</button>
+      <div class="spacer"></div>
+      <button id="export" title="Blocked list, allowed list, AI log, statistics and settings in one file">Export backup</button>
+      <label class="btn">Import backup<input id="import" type="file" accept=".json,application/json" hidden></label>
+      <button id="clear" class="danger">Clear log</button>
+    </footer>
+    <p id="msg" class="msg" hidden></p>
+  </main>
+
+  <div id="tip" class="tip" hidden></div>
+  <div id="toast" class="toast" hidden><span></span><button>Undo</button></div>
+  <script src="backup.js"></script>
+  <script src="stats.js"></script>
+</body>
+</html>

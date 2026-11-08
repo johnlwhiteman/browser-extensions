@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Blocked list – John&#39;s YouTube AI Video Channel Blocker</title>
+  <link rel="icon" href="icons/icon-32.png">
+  <link rel="stylesheet" href="manage.css">
+</head>
+<body>
+  <nav class="topnav">
+    <span class="brand"><img src="icons/icon-32.png" alt="" width="20" height="20">John&#39;s YouTube AI Video Channel Blocker</span>
+    <a href="stats.html">AI videos caught</a>
+    <a href="manage.html" class="current">Blocked list</a>
+  </nav>
+  <main>
+    <header>
+      <img src="icons/icon-48.png" alt="" width="36" height="36">
+      <div>
+        <h1>Blocked list</h1>
+        <p class="sub">Videos and channels you've blocked on YouTube. They're hidden everywhere: home, search, sidebar and Shorts.</p>
+      </div>
+    </header>
+
+    <form id="add" class="add">
+      <input id="add-input" type="text" autocomplete="off"
+             placeholder="Paste a YouTube video or channel link, or an @handle, to block it">
+      <button type="submit">Block</button>
+    </form>
+    <p id="add-msg" class="msg" hidden></p>
+
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="channels" class="active">Channels <span id="count-channels" class="pill">0</span></button>
+      <button role="tab" data-tab="videos">Videos <span id="count-videos" class="pill">0</span></button>
+      <button role="tab" data-tab="allowed" title="AI-labeled videos and channels you chose to always show">Allowed <span id="count-allowed" class="pill">0</span></button>
+      <div class="spacer"></div>
+      <input id="search" type="search" placeholder="Search">
+      <select id="sort" title="Sort">
+        <option value="new">Newest first</option>
+        <option value="old">Oldest first</option>
+        <option value="az">A–Z</option>
+      </select>
+    </nav>
+
+    <ul id="list" class="list"></ul>
+    <div id="empty" class="empty" hidden></div>
+
+    <footer>
+      <button id="unblock-all" class="danger">Unblock all in this tab</button>
+      <div class="spacer"></div>
+      <button id="export" title="Blocked list, allowed list, AI log, statistics and settings in one file">Export backup</button>
+      <label class="btn" title="Merge a backup file from another installation">Import backup<input id="import" type="file" accept=".json,application/json" hidden></label>
+    </footer>
+    <p class="hint">A backup has everything: blocked and allowed lists, the AI videos log and statistics, and saved detection results. Importing adds to what's here and never deletes anything.</p>
+  </main>
+
+  <div id="toast" class="toast" hidden><span></span><button>Undo</button></div>
+  <script src="backup.js"></script>
+  <script src="manage.js"></script>
+</body>
+</html>
