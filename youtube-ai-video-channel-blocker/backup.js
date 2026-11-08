@@ -38,6 +38,7 @@ const Backup = (() => {
       const c = obj(cur[key]);
       for (const [k, v] of Object.entries(obj(inc[key]))) {
         if (!c[k]) { c[k] = v; added[countKey]++; }
+        else if (v?.note && !c[k].note) { c[k].note = v.note; if (v.noteAt) c[k].noteAt = v.noteAt; } // keep block reasons
       }
       out[key] = c;
     };

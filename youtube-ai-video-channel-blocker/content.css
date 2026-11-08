@@ -104,3 +104,36 @@ html[dark] #avf-mini-menu .avf-menu-item { color: #f1f1f1; }
   border: 0; background: none; color: #3ea6ff; font: 500 14px Roboto, Arial, sans-serif;
   cursor: pointer; padding: 0;
 }
+
+/* ---------------- block reasons (notes) ---------------- */
+.avf-note-editor { display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 0; }
+.avf-note-editor textarea {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 52px;
+  padding: 8px 10px; border-radius: 8px; border: 1px solid #555;
+  background: #121212; color: #f1f1f1; font: 14px/1.4 Roboto, Arial, sans-serif;
+}
+.avf-note-editor textarea:focus { outline: 2px solid #3ea6ff; outline-offset: 0; border-color: transparent; }
+.avf-note-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.avf-note-actions button {
+  border: 0; border-radius: 16px; padding: 6px 14px; cursor: pointer;
+  font: 500 13px Roboto, Arial, sans-serif; background: #f1f1f1; color: #0f0f0f;
+}
+.avf-note-actions button.avf-secondary { background: #3f3f3f; color: #f1f1f1; }
+
+#avf-toast.avf-toast-editing { flex-direction: column; align-items: stretch; gap: 10px; width: 400px; }
+#avf-toast .avf-note-actions button { padding: 6px 14px; border-radius: 16px; background: #f1f1f1; color: #0f0f0f; font-size: 13px; }
+#avf-toast .avf-note-actions button.avf-secondary { background: #3f3f3f; color: #f1f1f1; }
+
+#avf-guard .avf-guard-note { margin: -8px 0 20px; text-align: left; }
+#avf-guard .avf-guard-note:empty { display: none; }
+#avf-guard .avf-guard-note blockquote {
+  margin: 0 0 8px; padding: 10px 12px; border-left: 3px solid #dc2626; border-radius: 6px;
+  background: #2c2c2c; color: #e5e5e5; font-size: 14px; line-height: 1.4;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+#avf-guard .avf-guard-note blockquote b { color: #aaa; font-weight: 500; }
+#avf-guard button.avf-link {
+  background: none; color: #3ea6ff; padding: 0; border-radius: 0; font-size: 13px;
+}
+#avf-guard button.avf-link:hover { text-decoration: underline; filter: none; }
+#avf-guard .avf-note-editor textarea { min-height: 70px; }

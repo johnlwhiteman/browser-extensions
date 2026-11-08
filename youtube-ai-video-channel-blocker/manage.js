@@ -26,7 +26,10 @@
     if (c.blockedChannels) channels = c.blockedChannels.newValue || {};
     if (c.allowedVideos) allowedV = c.allowedVideos.newValue || {};
     if (c.allowedChannels) allowedC = c.allowedChannels.newValue || {};
-    if (c.blockedVideos || c.blockedChannels || c.allowedVideos || c.allowedChannels) render();
+    if (c.blockedVideos || c.blockedChannels || c.allowedVideos || c.allowedChannels) {
+      if (editing && document.activeElement?.closest('.note-editor')) return; // don't wipe what you're typing
+      render();
+    }
   });
 
   // ---------------------------------------------------------------- helpers
@@ -62,7 +65,7 @@
       list = Object.entries(tab === 'channels' ? channels : videos).map(([key, r]) => ({ key, ...r }));
     }
     if (q) {
-      list = list.filter((r) => [r.name, r.handle, r.id, r.title, r.channel, r.key]
+      list = list.filter((r) => [r.name, r.handle, r.id, r.title, r.channel, r.key, r.note]
         .some((v) => (v || '').toLowerCase().includes(q)));
     }
     const sort = $('sort').value;
@@ -72,6 +75,49 @@
         : (a, b) => (b.addedAt || 0) - (a.addedAt || 0));
     return list;
   };
+
+  // ------------------------------------------------- reasons (notes)
+  const NOTE_MAX = 500;
+  let editing = null; // `${tab}:${key}` of the row whose note is open for editing
+
+  const setNote = async (kind, key, text) => {
+    const store = kind === 'channels' ? channels : videos;
+    const rec = store[key];
+    if (!rec) return;
+    const t = (text || '').trim().slice(0, NOTE_MAX);
+    if (t) { rec.note = t; rec.noteAt = Date.now(); } else { delete rec.note; delete rec.noteAt; }
+    editing = null;
+    await save();
+    render();
+    toast(t ? 'Reason saved' : 'Reason removed');
+  };
+
+  const noteBlock = (kind, r) => {
+    const id = `${kind}:${r.key}`;
+    if (editing === id) {
+      const ta = el('textarea', { value: r.note || '', maxLength: NOTE_MAX, rows: 2,
+        placeholder: 'Why did you block this? (e.g. AI voice-over, clickbait, spam)' });
+      const form = el('form', { className: 'note-editor' }, ta,
+        el('div', { className: 'note-actions' },
+          el('span', { className: 'note-hint', textContent: 'Enter to save · Shift+Enter for a new line · Esc to cancel' }),
+          el('button', { type: 'button', textContent: 'Cancel', onclick: () => { editing = null; render(); } }),
+          el('button', { type: 'submit', className: 'primary', textContent: 'Save' })));
+      form.onsubmit = (e) => { e.preventDefault(); setNote(kind, r.key, ta.value); };
+      ta.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+        else if (e.key === 'Escape') { e.preventDefault(); editing = null; render(); }
+      };
+      return form;
+    }
+    if (!r.note) return null;
+    return el('div', { className: 'note', title: r.noteAt ? `Edited ${fmtDate(r.noteAt)}` : '' }, r.note);
+  };
+
+  const noteButton = (kind, r) => el('button', {
+    className: 'note-btn', textContent: r.note ? 'Edit reason' : 'Add reason',
+    title: r.note ? 'Edit why you blocked this' : 'Write down why you blocked this',
+    onclick: () => { editing = `${kind}:${r.key}`; render(); }
+  });
 
   const render = () => {
     $('count-channels').textContent = Object.keys(channels).length;
@@ -99,20 +145,26 @@
           el('div', { className: 'avatar', textContent: (name.replace(/^@/, '')[0] || '?').toUpperCase() }),
           el('div', { className: 'info' },
             el('a', { className: 'title', href: channelUrl(r), target: '_blank', rel: 'noopener', textContent: name }),
-            el('div', { className: 'meta', textContent: [r.handle !== name ? r.handle : null, `Blocked ${fmtDate(r.addedAt)}`].filter(Boolean).join(' · ') })),
-          el('button', { textContent: 'Unblock', onclick: () => unblock('channels', r.key) }));
+            el('div', { className: 'meta', textContent: [r.handle !== name ? r.handle : null, `Blocked ${fmtDate(r.addedAt)}`].filter(Boolean).join(' · ') }),
+            noteBlock('channels', r)),
+          el('div', { className: 'row-btns' }, noteButton('channels', r),
+            el('button', { textContent: 'Unblock', onclick: () => unblock('channels', r.key) })));
       } else {
         li = el('li', {},
           el('img', { className: 'thumb', src: `https://i.ytimg.com/vi/${r.key}/mqdefault.jpg`, alt: '', loading: 'lazy' }),
           el('div', { className: 'info' },
             el('a', { className: 'title', href: `https://www.youtube.com/watch?v=${r.key}`, target: '_blank', rel: 'noopener', textContent: r.title || r.key }),
-            el('div', { className: 'meta', textContent: [r.channel, `Blocked ${fmtDate(r.addedAt)}`].filter(Boolean).join(' · ') })),
-          el('button', { textContent: 'Unblock', onclick: () => unblock('videos', r.key) }));
+            el('div', { className: 'meta', textContent: [r.channel, `Blocked ${fmtDate(r.addedAt)}`].filter(Boolean).join(' · ') }),
+            noteBlock('videos', r)),
+          el('div', { className: 'row-btns' }, noteButton('videos', r),
+            el('button', { textContent: 'Unblock', onclick: () => unblock('videos', r.key) })));
       }
       list.append(li);
     }
     const total = tab === 'allowed' ? Object.keys(allowedC).length + Object.keys(allowedV).length
       : Object.keys(tab === 'channels' ? channels : videos).length;
+    const ta = list.querySelector('.note-editor textarea');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
     $('empty').hidden = items.length > 0;
     $('empty').textContent = total === 0
       ? tab === 'allowed' ? 'Nothing allowed yet. AI-labeled videos you allow (from the “AI videos caught” page, or “Always allow this channel” on YouTube) appear here.'
@@ -152,7 +204,7 @@
     });
   };
 
-  document.querySelectorAll('[role=tab]').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; render(); }; });
+  document.querySelectorAll('[role=tab]').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; editing = null; render(); }; });
   $('search').oninput = render;
   $('sort').onchange = render;
 
@@ -188,16 +240,22 @@
     const handle = raw.match(/(?:^|youtube\.com\/)(@[^/?#\s]+)/)?.[1];
     const cid = raw.match(/\/channel\/(UC[\w-]{22})/)?.[1] || (/^UC[\w-]{22}$/.test(raw) ? raw : null);
 
+    const note = $('add-note').value.trim().slice(0, NOTE_MAX);
+    const withNote = (rec, prev) => {
+      const n = note || prev?.note;
+      if (n) { rec.note = n; rec.noteAt = note ? Date.now() : prev.noteAt; }
+      return rec;
+    };
     if (vid) {
       showMsg('Looking up video…');
       const info = await fetchVideoInfo(vid);
-      videos[vid] = { title: info.title || vid, channel: info.channel || '', addedAt: Date.now() };
+      videos[vid] = withNote({ title: info.title || vid, channel: info.channel || '', addedAt: Date.now() }, videos[vid]);
       tab = 'videos';
       showMsg(`Blocked video: ${info.title || vid}`);
     } else if (handle || cid) {
       const h = handle ? decodeURIComponent(handle) : null;
       const key = cid || h.toLowerCase();
-      channels[key] = { id: cid, handle: h, name: h || cid, addedAt: Date.now() };
+      channels[key] = withNote({ id: cid, handle: h, name: h || cid, addedAt: Date.now() }, channels[key]);
       tab = 'channels';
       showMsg(`Blocked channel: ${h || cid}`);
     } else {
@@ -205,6 +263,7 @@
       return;
     }
     $('add-input').value = '';
+    $('add-note').value = '';
     await save();
     render();
   };

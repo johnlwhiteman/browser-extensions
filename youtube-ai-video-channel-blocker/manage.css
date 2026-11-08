@@ -19,7 +19,9 @@ button, .btn {
 }
 button:hover, .btn:hover { background: var(--hover); }
 
-.add { display: flex; gap: 8px; }
+.add { display: flex; flex-wrap: wrap; gap: 8px; }
+.add #add-input { flex: 1 1 400px; }
+.add #add-note { flex: 1 1 100%; padding: 8px 14px; font-size: 13px; }
 .add input {
   flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 22px;
   background: var(--card); color: var(--text); font: inherit;
@@ -70,3 +72,23 @@ footer { display: flex; align-items: center; gap: 8px; margin-top: 22px; padding
 .topnav a:hover { background: var(--hover); color: var(--text); }
 .topnav a.current { background: var(--text); color: var(--bg); }
 .hint { color: var(--muted); font-size: 12px; margin: 10px 2px 0; }
+
+/* block reasons */
+.list li { align-items: flex-start; }
+.list li .avatar, .list li .thumb, .row-btns, .list li > button { margin-top: 2px; }
+.row-btns { flex: none; display: flex; gap: 6px; }
+.note-btn { color: var(--muted); }
+.note {
+  margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--accent); border-radius: 6px;
+  background: var(--chip); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.note-editor { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.note-editor textarea {
+  width: 100%; resize: vertical; min-height: 56px; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
+}
+.note-editor textarea:focus { outline: 2px solid #3ea6ff; outline-offset: -1px; }
+.note-actions { display: flex; align-items: center; gap: 6px; }
+.note-hint { flex: 1; color: var(--muted); font-size: 11px; }
+button.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+button.primary:hover { background: var(--text); filter: brightness(.9); }

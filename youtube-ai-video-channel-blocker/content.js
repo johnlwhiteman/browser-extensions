@@ -242,6 +242,57 @@
 
   const saveBlocks = () => chrome.storage.local.set({ blockedVideos, blockedChannels });
 
+  // ------------------------------------------------ reasons ("why I blocked it")
+  const NOTE_MAX = 500;
+  const channelKeyFor = (ch) => {
+    for (const [k, r] of Object.entries(blockedChannels)) {
+      if ((ch.id && r.id === ch.id) || (ch.handle && r.handle && r.handle.toLowerCase() === ch.handle.toLowerCase())) return k;
+    }
+    return null;
+  };
+  // kind: 'video' | 'channel'; key: videoId or blockedChannels key
+  const blockRecord = (kind, key) => (kind === 'video' ? blockedVideos : blockedChannels)[key] || null;
+  const setNote = async (kind, key, text) => {
+    const rec = blockRecord(kind, key);
+    if (!rec) return false;
+    const t = (text || '').trim().slice(0, NOTE_MAX);
+    if (t) { rec.note = t; rec.noteAt = Date.now(); } else { delete rec.note; delete rec.noteAt; }
+    await saveBlocks();
+    return true;
+  };
+
+  // A small text box with Save / Cancel. Keys typed here never reach YouTube's shortcuts.
+  const noteEditor = (initial, onSave, onCancel) => {
+    const f = document.createElement('form');
+    f.className = 'avf-note-editor';
+    const ta = document.createElement('textarea');
+    ta.maxLength = NOTE_MAX;
+    ta.rows = 2;
+    ta.placeholder = 'Why are you blocking this? (e.g. AI voice-over, clickbait, spam)';
+    ta.value = initial || '';
+    const row = document.createElement('div');
+    row.className = 'avf-note-actions';
+    const save = document.createElement('button');
+    save.type = 'submit';
+    save.textContent = 'Save';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'avf-secondary';
+    cancel.textContent = 'Cancel';
+    row.append(save, cancel);
+    f.append(ta, row);
+    const stop = (e) => e.stopPropagation();
+    for (const ev of ['keydown', 'keyup', 'keypress']) f.addEventListener(ev, stop);
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+    });
+    f.addEventListener('submit', (e) => { e.preventDefault(); onSave(ta.value); });
+    cancel.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onCancel(); });
+    queueMicrotask(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }); // runs right after the caller attaches it
+    return f;
+  };
+
   // ------------------------------------------------------- reading the page
   const idFromHref = (h) => {
     if (!h) return null;
@@ -509,9 +560,49 @@
 
   const removeGuard = () => document.getElementById('avf-guard')?.remove();
 
+  // Which blocked record caused the guard (to show / edit its reason)
+  const guardTarget = (id, reason) => {
+    if (reason === 'video') return blockedVideos[id] ? { kind: 'video', key: id } : null;
+    if (reason === 'channel') {
+      const key = channelKeyFor(channelFor(watchEl(), cache[id]));
+      return key ? { kind: 'channel', key } : null;
+    }
+    return null;
+  };
+
+  const renderGuardNote = (g) => {
+    const box = g.querySelector('.avf-guard-note');
+    if (!box || box.querySelector('.avf-note-editor')) return; // don't clobber while editing
+    const tgt = guardTarget(g.dataset.vid, g.dataset.reason);
+    const rec = tgt && blockRecord(tgt.kind, tgt.key);
+    box.textContent = '';
+    if (!rec) return;
+    if (rec.note) {
+      const q = document.createElement('blockquote');
+      const lbl = document.createElement('b');
+      lbl.textContent = 'Your reason: ';
+      q.append(lbl, rec.note);
+      box.appendChild(q);
+    }
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'avf-link';
+    edit.textContent = rec.note ? 'Edit reason' : 'Add a reason';
+    edit.onclick = (e) => {
+      e.stopPropagation();
+      box.textContent = '';
+      box.appendChild(noteEditor(rec.note, async (text) => {
+        box.textContent = '';
+        await setNote(tgt.kind, tgt.key, text);
+        renderGuardNote(g);
+      }, () => { box.textContent = ''; renderGuardNote(g); }));
+    };
+    box.appendChild(edit);
+  };
+
   const showGuard = (id, reason) => {
     const existing = document.getElementById('avf-guard');
-    if (existing?.dataset.vid === id && existing.dataset.reason === reason) return;
+    if (existing?.dataset.vid === id && existing.dataset.reason === reason) { renderGuardNote(existing); return; }
     existing?.remove();
     document.querySelector('#movie_player video')?.pause();
     const g = document.createElement('div');
@@ -524,6 +615,7 @@
         <div class="avf-badge ${blocked ? 'avf-badge-block' : ''}">${blocked ? 'BLOCKED' : 'AI'}</div>
         <h2></h2>
         <p></p>
+        ${blocked ? '<div class="avf-guard-note"></div>' : ''}
         <div class="avf-actions">
           <button data-act="back">Go back</button>
           <button data-act="watch" class="avf-secondary">Watch anyway</button>
@@ -536,6 +628,7 @@
         : reason === 'channel' ? 'You blocked this channel' : 'You blocked this video';
     g.querySelector('p').textContent = "John's YouTube AI Video Channel Blocker paused it for you.";
     document.documentElement.appendChild(g);
+    renderGuardNote(g);
     g.addEventListener('click', async (e) => {
       const act = e.target.closest('button')?.dataset.act;
       if (!act) return;
@@ -605,14 +698,16 @@
   // --------------------------------------------------------- block actions
   const blockVideo = async (vid, el) => {
     const title = domTitle(el);
+    const prevNote = blockedVideos[vid]?.note;
     blockedVideos[vid] = { title: title || vid, channel: '', addedAt: Date.now() };
+    if (prevNote) blockedVideos[vid].note = prevNote;
     setBlocks(blockedVideos, blockedChannels);
     reevaluateAll();
     await saveBlocks();
     toast(`Blocked video${title ? ` “${clip(title, 50)}”` : ''}`, async () => {
       delete blockedVideos[vid];
       await saveBlocks();
-    });
+    }, { kind: 'video', key: vid });
     if (vid === currentWatchId()) handleCurrentVideo();
     // fill in channel name / title for the list page
     getInfoNow(vid).then((info) => {
@@ -628,17 +723,19 @@
     if (!ch.id) ch = channelFor(el, await getInfoNow(vid));
     if (!ch.id && !ch.handle) { toast("Couldn't identify this video's channel. Try again in a moment."); return; }
     const key = ch.id || ch.handle.toLowerCase();
+    const prevNote = blockedChannels[key]?.note;
     blockedChannels[key] = {
       id: ch.id || null, handle: ch.handle || null,
       name: ch.name || ch.handle || ch.id, addedAt: Date.now()
     };
+    if (prevNote) blockedChannels[key].note = prevNote;
     setBlocks(blockedVideos, blockedChannels);
     reevaluateAll();
     await saveBlocks();
     toast(`Blocked channel ${clip(blockedChannels[key].name, 40)}`, async () => {
       delete blockedChannels[key];
       await saveBlocks();
-    });
+    }, { kind: 'channel', key });
     if (vid === currentWatchId()) handleCurrentVideo();
   };
 
@@ -677,7 +774,8 @@
 
   // ------------------------------------------------------------------ toast
   let toastTimer = null;
-  const toast = (msg, undo) => {
+  // noteFor: {kind, key} of a just-blocked item → adds an "Add reason" button
+  const toast = (msg, undo, noteFor) => {
     document.getElementById('avf-toast')?.remove();
     clearTimeout(toastTimer);
     const t = document.createElement('div');
@@ -685,6 +783,26 @@
     const span = document.createElement('span');
     span.textContent = msg;
     t.appendChild(span);
+    if (noteFor) {
+      const b = document.createElement('button');
+      b.textContent = 'Add reason';
+      b.onclick = () => {
+        clearTimeout(toastTimer);                 // stay open while typing
+        const rec = blockRecord(noteFor.kind, noteFor.key);
+        if (!rec) { t.remove(); return; }
+        t.textContent = '';
+        t.classList.add('avf-toast-editing');
+        const label = document.createElement('span');
+        label.textContent = msg;
+        t.append(label, noteEditor(rec.note, async (text) => {
+          t.remove();
+          if (await setNote(noteFor.kind, noteFor.key, text)) {
+            toast(text.trim() ? 'Reason saved' : 'Reason removed');
+          }
+        }, () => t.remove()));
+      };
+      t.appendChild(b);
+    }
     if (undo) {
       const b = document.createElement('button');
       b.textContent = 'Undo';
@@ -692,7 +810,7 @@
       t.appendChild(b);
     }
     document.documentElement.appendChild(t);
-    toastTimer = setTimeout(() => t.remove(), 6000);
+    toastTimer = setTimeout(() => t.remove(), noteFor ? 9000 : 6000);
   };
 
   // ------------------------------------------------- our own small menu

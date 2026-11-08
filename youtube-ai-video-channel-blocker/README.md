@@ -7,3 +7,13 @@ The irony here is that this extension was created by AI (Claude).
 Use at your own risk. No support here.
 
 John L. Whiteman
+
+## Block reasons
+
+You can write down why you blocked a video or channel, and change it later:
+
+- Right after blocking on YouTube, click **Add reason** in the little message at the bottom left.
+- When you open a blocked video, the "You blocked this" screen shows your reason, with **Edit reason** / **Add a reason**.
+- On the **Blocked list** page, every row has **Add reason** / **Edit reason**. You can also type a reason when blocking by link, and the search box searches reasons too.
+
+Reasons are included in backups. Clear the text and save to remove a reason.
